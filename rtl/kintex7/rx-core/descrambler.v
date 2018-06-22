@@ -60,7 +60,8 @@ module descrambler #
         if (rst) begin
             unscrambled_data_i <= 'h0;
             //descrambler        <= 122'h155_5555_5555_5555_5555_5555_5555_5555; // MAKE THIS SET VIA PARAMETERS
-            descrambler        <= 122'hFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF; // MAKE THIS SET VIA PARAMETERS
+            // descrambler        <= 122'hFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF; // MAKE THIS SET VIA PARAMETERS
+            descrambler        <= {122{1'b1}}; //(others=> '1')
         end
         else if (enable) begin
             unscrambled_data_i <= tempData;

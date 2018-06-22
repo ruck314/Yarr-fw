@@ -182,6 +182,9 @@ architecture behavioral of aurora_rx_lane is
     );
     END COMPONENT  ;
     
+    signal probe1 : STD_LOGIC_VECTOR(63 DOWNTO 0); 
+    signal probe8 : STD_LOGIC_VECTOR(31 DOWNTO 0); 
+    
 begin
     
     rst <= not rst_n_i;
@@ -190,18 +193,21 @@ begin
     PORT MAP (
       clk => clk_rx_i,
       probe0 => serdes_data32, 
-      probe1 => m_delay_1hot & eye_info, 
+      probe1 => probe1, 
       probe2 => descrambled_data(63 downto 0), 
       probe3(0) => serdes_data32_valid,
       probe4(0) => gearbox_data66_valid, 
       probe5(0) => gearbox_slip, 
       probe6(0) => serdes_slip,
       probe7(0) => descrambled_data_valid,
-      probe8 => x"00" & std_logic_vector(sync_cnt) & "00" & serdes_data2_valid & serdes_lock & std_logic_vector(slip_cnt) & bit_time_value & descrambled_header,
+      probe8 => probe8,
       probe9(0) => '0',
       probe10(0) => '0',
       probe11(0) => '0'
     );
+    
+    probe1 <= m_delay_1hot & eye_info;
+    probe8 <= x"00" & std_logic_vector(sync_cnt) & "00" & serdes_data2_valid & serdes_lock & std_logic_vector(slip_cnt) & bit_time_value & descrambled_header;
 
     -- XAPP1017 style SERDES with auto-phase detection up to 1.6Gbps
     xapp1017_serdes: if g_SERDES_TYPE = "XAPP1017" generate

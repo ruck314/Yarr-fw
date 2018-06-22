@@ -36,7 +36,8 @@ module scrambler #
     begin
         if (rst) begin
             //scrambler        <= 122'h155_5555_5555_5555_5555_5555_5555_5555;
-            scrambler        <= 122'hFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF;
+            // scrambler        <= 122'hFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF;
+            scrambler        <= {122{1'b1}}; //(others=> '1')
         end
         else if (enable) begin
             scrambler <= poly;

@@ -122,6 +122,10 @@ architecture behavioral of aurora_rx_channel is
     signal rx_fifo_rden_t : std_logic_vector(g_NUM_LANES-1 downto 0);
     signal rx_fifo_wren : std_logic_vector(g_NUM_LANES-1 downto 0);
     
+    signal wr_en : std_logic_vector(g_NUM_LANES-1 downto 0);
+    signal rst : std_logic;
+    signal rx_fifo_empty_n : std_logic_vector(g_NUM_LANES-1 downto 0);  
+    
     signal channel : integer range 0 to g_NUM_LANES-1;
     
     COMPONENT ila_rx_dma_wb
@@ -141,17 +145,20 @@ architecture behavioral of aurora_rx_channel is
         probe11 : IN STD_LOGIC_VECTOR(0 DOWNTO 0)
     );
     END COMPONENT  ;
-            
+
 begin
 
-    rx_data_o <= rx_data_s;
+    rx_data_o  <= rx_data_s;
     rx_valid_o <= rx_valid_s;
+    
+    rst             <= not rst_n_i;
+    rx_fifo_empty_n <= not rx_fifo_empty;
 	
 	-- Arbiter
 	cmp_rr_arbiter : rr_arbiter port map (
 		clk_i => clk_rx_i,
-		rst_i => not rst_n_i,
-		req_i => not rx_fifo_empty,
+		rst_i => rst,
+		req_i => rx_fifo_empty_n,
 		gnt_o => rx_fifo_rden_t
 	);
 	
@@ -214,16 +221,19 @@ begin
                            '0';
                            
         cmp_lane_fifo : rx_channel_fifo PORT MAP (
-            rst => not rst_n_i,
+            rst => rst,
             wr_clk => clk_rx_i,
             rd_clk => clk_rx_i,
             din => rx_fifo_din(I),
-            wr_en => rx_fifo_wren(I) and enable_i,
+            wr_en => wr_en(I),
             rd_en => rx_fifo_rden(I),
             dout => rx_fifo_dout(I),
             full => rx_fifo_full(I),
             empty => rx_fifo_empty(I)
         );        
+        
+        wr_en(I) <= rx_fifo_wren(I) and enable_i;
+        
     end generate lane_loop;
     
     aurora_channel_debug : ila_rx_dma_wb
