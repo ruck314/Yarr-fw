@@ -13,6 +13,9 @@ use ieee.numeric_std.all;
 library unisim ;
 use unisim.vcomponents.all ;
 
+Library xpm;
+use xpm.vcomponents.all;
+
 entity aurora_rx_channel is
     generic (
         g_NUM_LANES : integer range 1 to 4 := 1
@@ -86,19 +89,19 @@ architecture behavioral of aurora_rx_channel is
         );
     end component rr_arbiter;
     
-    COMPONENT rx_channel_fifo
-        PORT (
-            rst : IN STD_LOGIC;
-            wr_clk : IN STD_LOGIC;
-            rd_clk : IN STD_LOGIC;
-            din : IN STD_LOGIC_VECTOR(63 DOWNTO 0);
-            wr_en : IN STD_LOGIC;
-            rd_en : IN STD_LOGIC;
-            dout : OUT STD_LOGIC_VECTOR(63 DOWNTO 0);
-            full : OUT STD_LOGIC;
-            empty : OUT STD_LOGIC
-        );
-    END COMPONENT;
+    -- COMPONENT rx_channel_fifo
+        -- PORT (
+            -- rst : IN STD_LOGIC;
+            -- wr_clk : IN STD_LOGIC;
+            -- rd_clk : IN STD_LOGIC;
+            -- din : IN STD_LOGIC_VECTOR(63 DOWNTO 0);
+            -- wr_en : IN STD_LOGIC;
+            -- rd_en : IN STD_LOGIC;
+            -- dout : OUT STD_LOGIC_VECTOR(63 DOWNTO 0);
+            -- full : OUT STD_LOGIC;
+            -- empty : OUT STD_LOGIC
+        -- );
+    -- END COMPONENT;
     
     constant c_AURORA_IDLE : std_logic_vector(7 downto 0) := x"78";
     constant c_AURORA_SEP : std_logic_vector(7 downto 0) := x"1E";
@@ -220,7 +223,27 @@ begin
                            rx_data_valid(I) when ((rx_header(I) = "10") and (rx_data(I)(63 downto 56) = x"D2")) else
                            '0';
                            
-        cmp_lane_fifo : rx_channel_fifo PORT MAP (
+        -- cmp_lane_fifo : rx_channel_fifo PORT MAP (
+            -- rst => rst,
+            -- wr_clk => clk_rx_i,
+            -- rd_clk => clk_rx_i,
+            -- din => rx_fifo_din(I),
+            -- wr_en => wr_en(I),
+            -- rd_en => rx_fifo_rden(I),
+            -- dout => rx_fifo_dout(I),
+            -- full => rx_fifo_full(I),
+            -- empty => rx_fifo_empty(I)
+        -- );
+
+      cmp_lane_fifo : xpm_fifo_async
+         generic map (
+            FIFO_MEMORY_TYPE => "block",
+            USE_ADV_FEATURES => "1f1f",
+            FIFO_WRITE_DEPTH => 256,
+            READ_MODE        => "fwft",
+            READ_DATA_WIDTH  => 64,
+            WRITE_DATA_WIDTH => 64)
+         port map (
             rst => rst,
             wr_clk => clk_rx_i,
             rd_clk => clk_rx_i,
@@ -229,9 +252,12 @@ begin
             rd_en => rx_fifo_rden(I),
             dout => rx_fifo_dout(I),
             full => rx_fifo_full(I),
-            empty => rx_fifo_empty(I)
-        );        
-        
+            empty => rx_fifo_empty(I),
+            injectdbiterr => '0',
+            injectsbiterr => '0',
+            sleep => '0'
+        ); 
+
         wr_en(I) <= rx_fifo_wren(I) and enable_i;
         
     end generate lane_loop;
