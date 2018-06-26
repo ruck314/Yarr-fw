@@ -241,6 +241,7 @@ begin
             USE_ADV_FEATURES => "1f1f",
             FIFO_WRITE_DEPTH => 256,
             READ_MODE        => "fwft",
+            PROG_FULL_THRESH => 128,
             READ_DATA_WIDTH  => 64,
             WRITE_DATA_WIDTH => 64)
          port map (
