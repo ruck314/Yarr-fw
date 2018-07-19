@@ -16,6 +16,8 @@ library unisim ;
 use unisim.vcomponents.all ;
 
 entity aurora_rx_lane is 
+   generic (
+      g_SERDES_TYPE : string := "CUSTOM"); -- or "XAPP1017"
     port (
         -- Sys connect
         rst_n_i : in std_logic;
@@ -25,6 +27,7 @@ entity aurora_rx_lane is
         -- Input
         rx_data_i_p : in std_logic;
         rx_data_i_n : in std_logic;
+        inv_rx_data : in std_logic;
 
         -- Output
         rx_data_o : out std_logic_vector(63 downto 0);
@@ -88,7 +91,7 @@ architecture behavioral of aurora_rx_lane is
             data32_i : in std_logic_vector(31 downto 0);
             data32_valid_i : in std_logic;
             slip_i : in std_logic;
-            -- Outoput
+            -- Output
             data66_o : out std_logic_vector(65 downto 0);
             data66_valid_o : out std_logic
         );
@@ -105,7 +108,7 @@ architecture behavioral of aurora_rx_lane is
         );
     end component descrambler;
 
-    constant g_SERDES_TYPE : string := "CUSTOM";
+    -- constant g_SERDES_TYPE : string := "CUSTOM";
     constant c_SLIP_SERDES_MAX : unsigned(7 downto 0) := to_unsigned(1, 8); 
     
 --    constant g_SERDES_TYPE : string := "XAPP1017";
@@ -134,6 +137,7 @@ architecture behavioral of aurora_rx_lane is
 
     -- 8 to 32
     signal serdes_data32_shift : std_logic_vector(32 downto 0);
+    signal serdes_data32_mask : std_logic_vector(31 downto 0);
     signal serdes_data32 : std_logic_vector(31 downto 0);
     signal serdes_data32_valid : std_logic;
     signal serdes_cnt : unsigned(5 downto 0);
@@ -335,11 +339,13 @@ begin
         end process serdes_2to32_proc;
 
     end generate custom_serdes;
-
+    
+    serdes_data32_mask <= serdes_data32 when(inv_rx_data = '0') else not(serdes_data32);
+    
     gearbox32to66_cmp : gearbox32to66 port map (
         rst_i => rst,
         clk_i => clk_rx_i,
-        data32_i => serdes_data32,
+        data32_i => serdes_data32_mask,
         data32_valid_i => serdes_data32_valid,
         slip_i => gearbox_slip,
         data66_o => gearbox_data66,
